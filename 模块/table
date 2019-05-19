@@ -1,0 +1,123 @@
+<template>
+  <div class="tableList">
+    <el-table
+      :data="ListData"
+      :height="config.height"
+      @sort-change="sortChange"
+      tooltip-effect="dark"
+      ref="multipleTable"
+      stripe
+      fit
+      @selection-change="handleSelectionChange"
+      @row-click="rowclick"
+    >
+      <el-table-column type="selection" width="55"></el-table-column>
+
+      <el-table-column
+        v-for="(item,index) in tableLable"
+        :key="index"
+        :lable="item.lable"
+        :prop="item.value"
+        :width="item.width"
+        :sortable="item.custom"
+      >
+        <template slot-scope="scope">
+          <a
+            v-if="item.isOperation"
+            href="javascript:;"
+            @click="$emit('operationTableCall',scope.row,item.value)"
+          >{{scope.row[item.value]}}</a>
+          <p v-else>{{scope.row[item.value]}}</p>
+        </template>
+      </el-table-column>
+
+      <el-table-column v-if="operationList.length>0" fixed="right">
+        <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="text"
+            @click="operation(scope.row,item.operationType)"
+            v-for="(item,index) in operationList"
+            :key="index"
+          >{{item.lable}}</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :page-sizes="pageSizes"
+      :page-size="pageSize"
+      :current-page="currentPage"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="config.record"
+    ></el-pagination>
+    <!-- :total="record" -->
+  </div>
+</template>
+<script>
+import common from "@/utils/common.js";
+
+export default {
+  props: {
+    config: {
+      height: 0, //table height
+      record: 0 //total number
+    },
+    ListData: {}, //page data list
+    tableLable: {}, // page  lable
+    pageSizes: {}, // page  data number
+    operationList: {} // Data manipulation list
+  },
+  components: {},
+  data: function() {
+    return {
+      currentPage: 1, //current page number
+      pageSize: this.pageSizes[0] // Initialize the amount of page data
+    };
+  },
+  created: function() {},
+  watch: {},
+  methods: {
+    init: function() {},
+    // Single page data volume size change
+    handleSizeChange(val) {
+      this.newpageSize = val;
+      this.loadData(this.newpageSize, this.currentPage);
+    },
+    //Single page number volume size change
+    handleCurrentChange(val) {
+      this.currentPage = val;
+      this.loadData(this.pageSize, this.currentPage);
+    },
+    //pageSize : Current data volume
+    //currentPage : Current data volume size
+    //loader data
+    loadData(pageSize, currentPage) {
+      this.$emit("loadData", { pageSize, currentPage });
+    },
+    //Select single or multiple rows
+    handleSelectionChange: function(val) {
+      this.$emit("handleSelectionChange", val);
+    },
+    //The sorting conditions change
+    sortChange(val) {
+      this.$emit("sortChange", val);
+    },
+    //Current row click event
+    rowclick(row, column, event) {
+      this.tableLable.forEach(element => {
+        if (column.property == element.value) {
+          if (!element.isOperation) {
+            this.$refs.multipleTable.toggleRowSelection(row);
+          }
+        }
+      });
+    },
+    //Line operations
+    operation(row, operationType) {
+      this.$emit("operation", row, operationType);
+    }
+  }
+};
+</script>
